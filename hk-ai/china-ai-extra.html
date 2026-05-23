@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>china-ai-extra - AI 板块知识图谱</title>
+<link rel="icon" type="image/svg+xml" href="/claude-harness-site/assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/claude-harness-site/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/claude-harness-site/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/claude-harness-site/assets/favicon-180.png">
+<link rel="shortcut icon" href="/claude-harness-site/assets/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#FAF7F2;
+  --bg2:#F3EDE4;
+  --text:#1B1B18;
+  --text2:#6B6560;
+  --gold:#B8860B;
+  --gold-light:#D4A843;
+  --gold-glow:rgba(184,134,11,.12);
+  --navy:#1A2332;
+  --navy-light:#2C3E50;
+  --cream:#FFF8EE;
+  --border:#E0D6C8;
+  --card:#FFFFFF;
+  --link:#8B5E0B;
+  --serif:'Noto Serif SC','Crimson Pro',Georgia,'Times New Roman',serif;
+  --sans:'DM Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  --sidebar-w:260px;
+}
+
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  color:var(--text);
+  background:var(--bg);
+  display:flex;
+  min-height:100vh;
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--navy);
+  position:fixed;top:0;left:0;bottom:0;
+  overflow-y:auto;
+  z-index:100;
+  display:flex;
+  flex-direction:column;
+}
+.sidebar-header{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo{
+  color:#fff;
+  font-size:17px;
+  font-weight:700;
+  text-decoration:none;
+  letter-spacing:.5px;
+  font-family:var(--serif);
+  display:block;
+}
+.logo:hover{color:var(--gold-light)}
+
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sidebar-nav::-webkit-scrollbar{width:4px}
+.sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+
+.nav-link{
+  display:block;
+  padding:6px 16px;
+  color:#cbd5e1;
+  text-decoration:none;
+  font-size:13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  border-left:3px solid transparent;
+  transition:all .15s;
+}
+.nav-link:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-link.active{
+  color:#fff;
+  background:rgba(184,134,11,.15);
+  border-left-color:var(--gold);
+  font-weight:600;
+}
+.nav-home{font-size:14px;padding:10px 16px;font-weight:500;margin-bottom:4px}
+.nav-changelog{
+  margin-top:auto;
+  padding:14px 16px;
+  font-size:12px;
+  color:rgba(255,255,255,.4);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.nav-changelog:hover{color:rgba(255,255,255,.7)}
+.nav-changelog.active{color:var(--gold-light)}
+.sidebar-nav{display:flex;flex-direction:column;height:100%}
+
+.nav-group{margin-bottom:2px}
+.nav-group-title{
+  padding:8px 16px;
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  user-select:none;
+  transition:color .15s;
+}
+.nav-group-title:hover{color:#fff}
+.caret{
+  display:inline-block;
+  width:0;height:0;
+  border-left:5px solid #cbd5e1;
+  border-top:4px solid transparent;
+  border-bottom:4px solid transparent;
+  transition:transform .2s;
+}
+.nav-group.open .nav-group-title .caret{transform:rotate(90deg);border-left-color:#fff}
+.nav-group-title .badge{
+  margin-left:auto;
+  background:rgba(255,255,255,.1);
+  color:#cbd5e1;
+  font-size:11px;
+  padding:1px 6px;
+  border-radius:8px;
+  font-weight:400;
+}
+.nav-group-items{display:none;padding-left:8px}
+.nav-group.open .nav-group-items{display:block}
+
+.hamburger{
+  display:none;
+  position:fixed;
+  top:12px;left:12px;
+  z-index:200;
+  background:var(--navy);
+  color:#fff;
+  border:none;
+  font-size:20px;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== MAIN ===== */
+.main{
+  margin-left:max(var(--sidebar-w), calc((100vw - 1160px) / 2));
+  flex:1;
+  position:relative;
+  max-width:1160px;
+  padding:0;
+}
+
+/* grain overlay */
+.main::after{
+  content:'';
+  position:fixed;
+  top:0;left:var(--sidebar-w);right:0;bottom:0;
+  pointer-events:none;
+  opacity:.03;
+  z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===== ARTICLE (content pages) ===== */
+.article{max-width:820px;padding:48px 48px 80px}
+.meta{
+  font-size:13px;
+  color:var(--text2);
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.type-badge{
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:4px;
+  color:#fff;
+  font-weight:600;
+}
+.type-概念{background:#7C5E2A}
+.type-方法{background:#5E4A8B}
+.type-产品{background:#1A6B7C}
+.type-索引{background:#6B6560}
+
+.article h1{
+  font-family:var(--serif);
+  font-size:28px;
+  line-height:1.3;
+  margin-bottom:24px;
+  font-weight:900;
+  color:var(--navy);
+  letter-spacing:-.5px;
+}
+.article h2{
+  font-family:var(--serif);
+  font-size:21px;
+  margin:36px 0 14px;
+  padding-bottom:8px;
+  border-bottom:2px solid var(--border);
+  font-weight:700;
+  color:var(--navy);
+}
+.article h3{
+  font-family:var(--serif);
+  font-size:17px;
+  margin:24px 0 10px;
+  font-weight:600;
+  color:var(--navy-light);
+}
+.article p{margin:10px 0}
+.article ul,.article ol{padding-left:24px;margin:10px 0}
+.article li{margin:4px 0}
+
+.article a{
+  color:var(--link);
+  text-decoration:none;
+  background:linear-gradient(to bottom,transparent 60%,var(--gold-glow) 60%);
+  transition:background .2s;
+}
+.article a:hover{background:linear-gradient(to bottom,transparent 40%,rgba(184,134,11,.2) 40%)}
+
+.article blockquote{
+  background:var(--cream);
+  border-left:4px solid var(--gold);
+  padding:14px 20px;
+  margin:16px 0;
+  border-radius:0 8px 8px 0;
+  font-style:italic;
+  color:#5C4813;
+  font-family:var(--serif);
+}
+.article blockquote p{margin:0}
+.article blockquote a{background:none;color:var(--gold)}
+.article blockquote a:hover{text-decoration:underline}
+
+.article table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+.article th,.article td{border:1px solid var(--border);padding:8px 12px;text-align:left}
+.article th{background:var(--bg2);font-weight:600;color:var(--navy)}
+.article strong{font-weight:700}
+.article hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+.article code{
+  background:var(--bg2);
+  padding:2px 6px;
+  border-radius:3px;
+  font-size:13px;
+  font-family:'SF Mono',Menlo,Consolas,monospace;
+  color:#5C4813;
+}
+
+/* ===== BACKLINKS PANEL (right sidebar) ===== */
+.main.has-backlinks{
+  display:grid;
+  grid-template-columns:minmax(0,820px) 280px;
+  gap:0 24px;
+  max-width:1160px;
+}
+.main-content{min-width:0}
+
+.backlinks-panel{
+  grid-column:2;
+  grid-row:1/-1;
+  position:sticky;
+  top:24px;
+  max-height:calc(100vh - 48px);
+  overflow-y:auto;
+  padding:24px 0 24px 20px;
+  border-left:1px solid var(--border);
+  font-size:13px;
+  align-self:start;
+}
+.backlinks-panel::-webkit-scrollbar{width:3px}
+.backlinks-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.bl-panel-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.bl-panel-title{
+  font-family:var(--serif);
+  font-size:14px;
+  font-weight:700;
+  color:var(--navy);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.bl-count{
+  font-size:11px;
+  background:var(--bg2);
+  padding:1px 7px;
+  border-radius:10px;
+  color:var(--text2);
+  font-weight:600;
+}
+.bl-panel-actions{display:flex;gap:4px}
+.bl-action{
+  background:none;
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:2px 8px;
+  font-size:11px;
+  color:var(--text2);
+  cursor:pointer;
+  font-family:var(--sans);
+  transition:all .15s;
+}
+.bl-action:hover{border-color:var(--gold);color:var(--gold)}
+
+.bl-group{margin-bottom:4px}
+.bl-group-header{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:5px 0;
+  width:100%;
+  text-align:left;
+  font-size:13px;
+  font-family:var(--sans);
+}
+.bl-group-header:hover{background:rgba(0,0,0,.02);border-radius:4px}
+
+.bl-caret{
+  display:inline-block;
+  width:0;height:0;
+  border:4px solid transparent;
+  border-left:5px solid var(--text2);
+  transition:transform .15s;
+  flex-shrink:0;
+}
+.bl-group.open .bl-caret{transform:rotate(90deg)}
+
+.bl-source-name{
+  color:var(--navy);
+  font-weight:600;
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.bl-mention-cat{
+  font-size:10px;
+  color:var(--text2);
+  background:var(--bg2);
+  padding:0 5px;
+  border-radius:8px;
+  flex-shrink:0;
+  margin-left:4px;
+}
+
+.bl-snippets{display:none;padding:4px 0 4px 14px}
+.bl-group.open .bl-snippets{display:block}
+
+.bl-snippet{
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+  line-height:1.6;
+  color:var(--text2);
+  font-size:12px;
+}
+.bl-snippet:last-child{border-bottom:none}
+.bl-go-link{
+  display:inline-block;
+  font-size:11px;
+  color:var(--link);
+  text-decoration:none;
+  padding:4px 0 2px;
+  font-weight:600;
+  transition:color .15s;
+}
+.bl-go-link:hover{color:var(--gold);text-decoration:underline}
+
+/* ===== HOMEPAGE ===== */
+.hero-section{
+  position:relative;
+  padding:72px 48px 56px;
+  max-width:900px;
+  margin:0 auto;
+}
+.hero-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:20px;
+  opacity:0;
+  animation:fadeUp .6s ease forwards;
+}
+.hero-eyebrow::before{content:'';width:24px;height:1px;background:var(--gold)}
+.hero-title{
+  font-family:var(--serif);
+  font-size:clamp(32px,5vw,48px);
+  font-weight:900;
+  line-height:1.25;
+  letter-spacing:-1px;
+  color:var(--navy);
+  margin-bottom:6px;
+  opacity:0;
+  animation:fadeUp .6s ease .1s forwards;
+}
+.hero-title .gold{color:var(--gold)}
+.hero-sub{
+  font-size:17px;
+  color:var(--text2);
+  line-height:1.8;
+  margin-top:16px;
+  max-width:640px;
+  font-family:var(--serif);
+  font-weight:400;
+  opacity:0;
+  animation:fadeUp .6s ease .2s forwards;
+}
+.hero-sub b{color:var(--navy);font-weight:700}
+
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0;
+  max-width:900px;
+  margin:0 auto 48px;
+  padding:0 48px;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  opacity:0;
+  animation:fadeUp .6s ease .3s forwards;
+}
+.stat-item{
+  text-align:center;
+  padding:28px 12px;
+  position:relative;
+  transition:background .3s;
+  text-decoration:none;
+  color:inherit;
+}
+.stat-item:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  right:0;top:20%;
+  height:60%;
+  width:1px;
+  background:var(--border);
+}
+.stat-item:hover{background:var(--gold-glow)}
+.stat-num{
+  font-family:var(--serif);
+  font-size:42px;
+  font-weight:900;
+  color:var(--navy);
+  line-height:1;
+  margin-bottom:6px;
+  letter-spacing:-2px;
+}
+.stat-label{
+  font-size:13px;
+  color:var(--text2);
+  font-weight:500;
+  letter-spacing:.5px;
+}
+
+.main-inner{max-width:900px;padding:0 48px 80px;margin:0 auto}
+
+.nav-cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:56px;
+  opacity:0;
+  animation:fadeUp .6s ease .4s forwards;
+}
+.nav-card{
+  position:relative;
+  padding:28px 20px 24px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  text-decoration:none;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  display:block;
+  color:inherit;
+}
+.nav-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:var(--gold);
+  opacity:0;
+  transition:opacity .3s;
+}
+.nav-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 32px rgba(0,0,0,.08);
+  border-color:var(--gold-light);
+}
+.nav-card:hover::before{opacity:1}
+.nav-card-icon{font-size:32px;margin-bottom:14px;display:block;line-height:1}
+.nav-card-title{
+  font-family:var(--serif);
+  font-size:16px;
+  font-weight:700;
+  color:var(--navy);
+  margin-bottom:4px;
+}
+.nav-card-sub{font-size:13px;color:var(--text2)}
+.nav-card-arrow{
+  position:absolute;
+  bottom:20px;right:20px;
+  font-size:18px;
+  color:var(--border);
+  transition:all .3s;
+}
+.nav-card:hover .nav-card-arrow{color:var(--gold);transform:translateX(4px)}
+
+.section{margin-bottom:48px}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.section-line{flex:1;height:1px;background:var(--border)}
+.section-title{
+  font-family:var(--serif);
+  font-size:22px;
+  font-weight:700;
+  color:var(--navy);
+  white-space:nowrap;
+}
+.section-count{
+  font-size:12px;
+  color:var(--gold);
+  font-weight:600;
+  background:var(--gold-glow);
+  padding:3px 10px;
+  border-radius:12px;
+  white-space:nowrap;
+}
+
+.tag-cloud{display:flex;flex-wrap:wrap;gap:10px}
+.tag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 18px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  font-size:14px;
+  color:var(--text);
+  text-decoration:none;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  font-weight:500;
+}
+.tag:hover{
+  border-color:var(--gold);
+  color:var(--navy);
+  box-shadow:0 4px 16px var(--gold-glow);
+  transform:translateY(-2px);
+}
+.tag-n{
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  background:var(--gold);
+  padding:2px 8px;
+  border-radius:10px;
+  min-width:20px;
+  text-align:center;
+}
+.tag.tier-1{
+  font-size:16px;
+  padding:10px 22px;
+  font-weight:700;
+  border-color:var(--gold-light);
+  background:linear-gradient(135deg,#FFFDF5,#FFF8E7);
+}
+.tag.tier-1 .tag-n{font-size:12px;padding:3px 10px;background:var(--gold)}
+.tag.tier-2{font-size:15px;padding:9px 20px;font-weight:600}
+
+.gold-divider{display:flex;align-items:center;gap:16px;margin:56px 0}
+.gold-divider::before,.gold-divider::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--border),transparent);
+}
+.gold-divider-diamond{
+  width:8px;height:8px;
+  background:var(--gold);
+  transform:rotate(45deg);
+  flex-shrink:0;
+}
+
+.footer-promo{
+  position:relative;
+  overflow:hidden;
+  padding:40px;
+  background:var(--navy);
+  border-radius:20px;
+  color:#fff;
+  display:flex;
+  gap:40px;
+  align-items:center;
+}
+.footer-promo::before{
+  content:'';
+  position:absolute;
+  top:-50%;right:-20%;
+  width:400px;height:400px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(184,134,11,.15),transparent 70%);
+}
+.promo-story{flex:1;position:relative;z-index:1;min-width:0}
+.promo-story h3{
+  font-family:var(--serif);
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:12px;
+  color:var(--gold-light);
+}
+.promo-story p{font-size:14px;color:rgba(255,255,255,.75);line-height:1.8;margin:8px 0}
+.promo-credit{
+  margin-top:16px !important;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.12);
+  font-size:13px !important;
+}
+.promo-credit strong{color:var(--gold-light);font-weight:700}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.section{opacity:0;animation:fadeUp .5s ease forwards}
+.section:nth-child(1){animation-delay:.45s}
+.section:nth-child(2){animation-delay:.55s}
+.section:nth-child(3){animation-delay:.65s}
+.section:nth-child(4){animation-delay:.75s}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1024px){
+  .main.has-backlinks{display:block}
+  .backlinks-panel{
+    position:static;
+    max-height:none;
+    overflow-y:visible;
+    border-left:none;
+    border-top:1px solid var(--border);
+    padding:24px 16px;
+    margin-top:24px;
+    max-width:820px;
+  }
+}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:block}
+  .main{margin-left:0;max-width:100%}
+  .main::after{left:0}
+  .main.has-backlinks{display:block}
+  .article{padding:48px 16px 60px}
+  .backlinks-panel{padding:16px 12px;margin-top:16px}
+  .hero-section{padding:44px 20px 20px}
+  .hero-eyebrow{font-size:10px;margin-bottom:12px}
+  .hero-title{font-size:26px}
+  .hero-sub{font-size:14px;line-height:1.6;margin-top:10px}
+  .stats-row{padding:0 16px;margin:0 0 20px}
+  .stat-item{padding:16px 4px}
+  .stat-num{font-size:28px;letter-spacing:-1px}
+  .stat-label{font-size:11px}
+  .main-inner{padding:0 20px 60px}
+  .nav-cards{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:36px}
+  .nav-card{padding:20px 14px 18px}
+  .nav-card-icon{font-size:24px;margin-bottom:8px}
+  .nav-card-title{font-size:14px}
+  .nav-card-sub{font-size:12px}
+  .footer-promo{flex-direction:column;text-align:center;padding:28px 20px;gap:24px}
+}
+</style>
+</head>
+<body>
+<button class="hamburger" aria-label="菜单" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<aside class="sidebar">
+  <div class="sidebar-header"><a href="/ai-stocks-site/index.html" class="logo">AI 板块知识图谱</a></div>
+  <div class="sidebar-nav">
+    <a href="/ai-stocks-site/index.html" class="nav-link nav-home">🏛 首页</a>
+<div class="nav-group open">
+  <div class="nav-group-title"><span class="caret"></span>索引<span class="badge">4</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/index-pages/AI大厂索引.html" class="nav-link" title="AI大厂索引">AI大厂索引</a>
+    <a href="/ai-stocks-site/index-pages/AI芯片索引.html" class="nav-link" title="AI芯片索引">AI芯片索引</a>
+    <a href="/ai-stocks-site/index-pages/核心概念索引.html" class="nav-link" title="核心概念索引">核心概念索引</a>
+    <a href="/ai-stocks-site/index-pages/港股AI索引.html" class="nav-link" title="港股AI索引">港股AI索引</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>AI 芯片<span class="badge">1</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/us-chips/us-chips.html" class="nav-link" title="us-chips">us-chips</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>AI 大厂<span class="badge">1</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/us-bigtech/us-bigtech.html" class="nav-link" title="us-bigtech">us-bigtech</a>
+  </div>
+</div>
+<div class="nav-group open">
+  <div class="nav-group-title"><span class="caret"></span>港股 AI<span class="badge">5</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/hk-ai/MiniMax.html" class="nav-link" title="MiniMax">MiniMax</a>
+    <a href="/ai-stocks-site/hk-ai/china-ai-extra.html" class="nav-link active" title="china-ai-extra">china-ai-extra</a>
+    <a href="/ai-stocks-site/hk-ai/hk-ai.html" class="nav-link" title="hk-ai">hk-ai</a>
+    <a href="/ai-stocks-site/hk-ai/小米.html" class="nav-link" title="小米">小米</a>
+    <a href="/ai-stocks-site/hk-ai/智谱 AI.html" class="nav-link" title="智谱 AI">智谱 AI</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>概念<span class="badge">8</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/concepts/AI 云服务.html" class="nav-link" title="AI 云服务">AI 云服务</a>
+    <a href="/ai-stocks-site/concepts/AI 产业链全景.html" class="nav-link" title="AI 产业链全景">AI 产业链全景</a>
+    <a href="/ai-stocks-site/concepts/AI 大模型竞争.html" class="nav-link" title="AI 大模型竞争">AI 大模型竞争</a>
+    <a href="/ai-stocks-site/concepts/AI 开源 vs 闭源.html" class="nav-link" title="AI 开源 vs 闭源">AI 开源 vs 闭源</a>
+    <a href="/ai-stocks-site/concepts/AI 投资逻辑.html" class="nav-link" title="AI 投资逻辑">AI 投资逻辑</a>
+    <a href="/ai-stocks-site/concepts/AI 芯片产业链.html" class="nav-link" title="AI 芯片产业链">AI 芯片产业链</a>
+    <a href="/ai-stocks-site/concepts/中国 AI 产业.html" class="nav-link" title="中国 AI 产业">中国 AI 产业</a>
+    <a href="/ai-stocks-site/concepts/端侧 AI.html" class="nav-link" title="端侧 AI">端侧 AI</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>方法<span class="badge">3</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/methods/AI 产业链分析方法.html" class="nav-link" title="AI 产业链分析方法">AI 产业链分析方法</a>
+    <a href="/ai-stocks-site/methods/AI 公司估值方法.html" class="nav-link" title="AI 公司估值方法">AI 公司估值方法</a>
+    <a href="/ai-stocks-site/methods/AI 公司对比方法.html" class="nav-link" title="AI 公司对比方法">AI 公司对比方法</a>
+  </div>
+</div>
+
+  </div>
+</aside>
+<main class="main">
+<div class="article"><h1 id="ai-ai-minimax">中国 AI 公司深度研究：智谱 AI 与 MiniMax</h1>
+<blockquote>
+<p>数据来源：Wikipedia、GitHub 官方仓库、Hailuo AI 官网等公开信息<br />
+更新日期：2026 年 5 月 23 日</p>
+</blockquote>
+<hr />
+<h2 id="ai-zhipu-ai-zai">一、智谱 AI (Zhipu AI / Z.ai)</h2>
+<h3 id="11">1.1 公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>详情</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公司全称</td>
+<td>北京智谱华章科技股份有限公司（Knowledge Atlas Technology Joint Stock Co., Ltd.）</td>
+</tr>
+<tr>
+<td>国际品牌</td>
+<td>Z.ai（2025 年 7 月更名）</td>
+</tr>
+<tr>
+<td>成立时间</td>
+<td>2019 年</td>
+</tr>
+<tr>
+<td>总部</td>
+<td>北京</td>
+</tr>
+<tr>
+<td>创始人</td>
+<td>唐杰（Tang Jie）、李涓子（Li Juanzi）</td>
+</tr>
+<tr>
+<td>CEO</td>
+<td>张鹏（Zhang Peng）</td>
+</tr>
+<tr>
+<td>背景</td>
+<td>清华大学计算机系孵化，唐杰教授团队</td>
+</tr>
+<tr>
+<td>上市状态</td>
+<td>2026 年 1 月在香港交易所 IPO，成为中国首家上市的大模型公司</td>
+</tr>
+</tbody>
+</table>
+<h3 id="12">1.2 融资情况</h3>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>轮次</th>
+<th>金额</th>
+<th>估值</th>
+<th>主要投资方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2023 年</td>
+<td>多轮融资</td>
+<td>25 亿元人民币（~3.5 亿美元）</td>
+<td>-</td>
+<td>阿里巴巴、腾讯、美团、蚂蚁集团、小米、红杉中国（HongShan）</td>
+</tr>
+<tr>
+<td>2024 年 5 月</td>
+<td>新一轮融资</td>
+<td>4 亿美元</td>
+<td>~30 亿美元</td>
+<td>沙特 Prosperity7 Ventures 领投</td>
+</tr>
+<tr>
+<td>2026 年 1 月</td>
+<td>港股 IPO</td>
+<td>-</td>
+<td>上市定价约 30 亿美元+</td>
+<td>公开发售</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键投资者阵容</strong>：阿里巴巴、腾讯、美团、蚂蚁集团、小米、红杉中国（HongShan）、沙特 Prosper7 Ventures</p>
+<h3 id="13-ai">1.3 AI 业务布局</h3>
+<h4 id="glm-general-language-model">GLM 大模型系列（General Language Model）</h4>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>发布时间</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GLM-4-9B</td>
+<td>2024 年 6 月</td>
+<td>9B 参数基础模型，支持 128K 上下文</td>
+</tr>
+<tr>
+<td>GLM-4V-9B</td>
+<td>2024 年</td>
+<td>多模态视觉模型</td>
+</tr>
+<tr>
+<td>GLM-4-32B-0414</td>
+<td>2025 年 4 月</td>
+<td>32B 参数，性能对标 GPT-4o</td>
+</tr>
+<tr>
+<td>GLM-Z1-32B-0414</td>
+<td>2025 年 4 月</td>
+<td>推理模型，支持深度思考</td>
+</tr>
+<tr>
+<td>GLM-Z1-Rumination-32B</td>
+<td>2025 年 4 月</td>
+<td>扩展推理，处理复杂任务</td>
+</tr>
+<tr>
+<td>GLM-4.5</td>
+<td>2025 年 7 月</td>
+<td>可在 8 块 NVIDIA H20 芯片上运行</td>
+</tr>
+<tr>
+<td>GLM-4.6</td>
+<td>2025 年 9 月</td>
+<td>首个在寒武纪芯片上实现 FP8/Int4 量化</td>
+</tr>
+<tr>
+<td>GLM-5</td>
+<td>2026 年 2 月</td>
+<td>新一代旗舰模型</td>
+</tr>
+<tr>
+<td>GLM-5.1</td>
+<td>2026 年 4 月</td>
+<td>开源，采用 MIT 许可证</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_1">核心产品矩阵</h4>
+<table>
+<thead>
+<tr>
+<th>产品</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>智谱清言</strong></td>
+<td>AI 对话助手</td>
+<td>面向 C 端的对话产品，对标 ChatGPT</td>
+</tr>
+<tr>
+<td><strong>ChatGLM</strong></td>
+<td>开源对话模型</td>
+<td>开源版对话模型系列，社区广泛使用</td>
+</tr>
+<tr>
+<td><strong>CodeGeeX</strong></td>
+<td>代码生成</td>
+<td>CodeGeeX4-ALL-9B，HumanEval 82.3 分，128K 上下文，Apache-2.0 许可</td>
+</tr>
+<tr>
+<td><strong>AutoGLM</strong></td>
+<td>AI Agent</td>
+<td>智能手机语音指令 Agent</td>
+</tr>
+<tr>
+<td><strong>Ying（映）</strong></td>
+<td>文生视频</td>
+<td>生成 6 秒视频片段</td>
+</tr>
+<tr>
+<td><strong>AMiner</strong></td>
+<td>学术数据库</td>
+<td>唐杰教授 2006 年创建的学术研究平台</td>
+</tr>
+<tr>
+<td><strong>bigmodel.cn</strong></td>
+<td>API 平台</td>
+<td>商业 API 服务，面向开发者和企业</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14">1.4 核心竞争力</h3>
+<ol>
+<li><strong>清华系学术背景</strong>：创始团队来自清华大学计算机系，拥有深厚的 NLP 研究积累，AMiner 学术平台运营近 20 年</li>
+<li><strong>开源策略</strong>：GLM 系列模型持续开源，GLM-5.1 采用 MIT 许可证，建立开发者生态</li>
+<li><strong>国产芯片适配</strong>：GLM-4.6 率先在寒武纪芯片上实现量化推理，降低对 NVIDIA 依赖</li>
+<li><strong>B 端合作</strong>：API 平台 bigmodel.cn 服务企业客户，覆盖金融、教育、医疗等行业</li>
+<li><strong>全栈能力</strong>：从基础模型到对话产品、代码生成、视频生成、AI Agent 全覆盖</li>
+</ol>
+<h3 id="15">1.5 财务数据</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IPO 时间</td>
+<td>2026 年 1 月（港交所）</td>
+</tr>
+<tr>
+<td>IPO 前估值</td>
+<td>~30 亿美元</td>
+</tr>
+<tr>
+<td>营收</td>
+<td>未公开详细数据（上市前为非上市公司）</td>
+</tr>
+<tr>
+<td>2026 年 2 月</td>
+<td>股价下跌 23%，原因：算力资源短缺、用户投诉</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>注：智谱 AI 作为 2026 年 1 月新上市公司，详细财务数据需参考其港股招股书。</p>
+</blockquote>
+<h3 id="16">1.6 主要客户和合作伙伴</h3>
+<ul>
+<li><strong>云厂商合作</strong>：阿里云、腾讯云</li>
+<li><strong>硬件合作</strong>：寒武纪（国产 AI 芯片适配）</li>
+<li><strong>投资方兼合作方</strong>：阿里巴巴、腾讯、美团、蚂蚁集团、小米</li>
+<li><strong>国际资本</strong>：沙特 Prosperity7 Ventures</li>
+<li><strong>学术合作</strong>：清华大学</li>
+</ul>
+<h3 id="17">1.7 竞争格局</h3>
+<table>
+<thead>
+<tr>
+<th>竞争对手</th>
+<th>差异化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>百度（文心一言）</td>
+<td>搜索+AI，C 端用户基数大</td>
+</tr>
+<tr>
+<td>阿里（通义千问）</td>
+<td>云+AI 深度整合</td>
+</tr>
+<tr>
+<td>字节跳动（豆包）</td>
+<td>流量入口优势</td>
+</tr>
+<tr>
+<td>月之暗面（Kimi）</td>
+<td>长文本处理，年轻用户</td>
+</tr>
+<tr>
+<td>DeepSeek</td>
+<td>极致性价比，开源策略</td>
+</tr>
+<tr>
+<td>零一万物（Yi）</td>
+<td>李开复带队，国际化</td>
+</tr>
+<tr>
+<td>MiniMax</td>
+<td>多模态+出海</td>
+</tr>
+</tbody>
+</table>
+<p><strong>市场地位</strong>：IDC 2024 年数据，智谱 AI 是中国第三大大模型厂商。</p>
+<h3 id="18">1.8 风险与挑战</h3>
+<ul>
+<li><strong>美国实体清单</strong>：2025 年 1 月被美国商务部列入实体清单，影响芯片采购和国际合作</li>
+<li><strong>算力瓶颈</strong>：2026 年 2 月因算力资源短缺导致用户投诉和股价下跌</li>
+<li><strong>竞争加剧</strong>：DeepSeek 等新玩家以更低成本进入市场</li>
+</ul>
+<hr />
+<h2 id="minimax">二、MiniMax（稀宇科技）</h2>
+<h3 id="21">2.1 公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>详情</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>公司全称</td>
+<td>上海稀宇科技有限公司（MiniMax）</td>
+</tr>
+<tr>
+<td>成立时间</td>
+<td>2021 年 12 月</td>
+</tr>
+<tr>
+<td>总部</td>
+<td>上海</td>
+</tr>
+<tr>
+<td>创始人</td>
+<td>闫俊杰（Yan Junjie，CEO）、杨斌（Yang Bin）、周宇聪（Zhou Yucong）</td>
+</tr>
+<tr>
+<td>背景</td>
+<td>创始团队来自商汤科技（SenseTime）计算机视觉研究部门</td>
+</tr>
+<tr>
+<td>公司命名</td>
+<td>源自博弈论中的 minimax 算法</td>
+</tr>
+<tr>
+<td>员工规模</td>
+<td>~200+ 人（2025 年）</td>
+</tr>
+<tr>
+<td>上市状态</td>
+<td>2026 年 1 月 9 日在香港交易所上市（股票代码：SEHK 100）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="22">2.2 融资情况</h3>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>轮次</th>
+<th>金额</th>
+<th>估值</th>
+<th>主要投资方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>早期</td>
+<td>天使轮</td>
+<td>未公开</td>
+<td>-</td>
+<td>米哈游（MiHoYo）</td>
+</tr>
+<tr>
+<td>2024 年 3 月</td>
+<td>大额融资</td>
+<td>6 亿美元</td>
+<td>25 亿美元</td>
+<td>阿里巴巴领投</td>
+</tr>
+<tr>
+<td>2026 年 1 月</td>
+<td>港股 IPO</td>
+<td>-</td>
+<td>上市定价</td>
+<td>公开发售</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键投资者阵容</strong>：阿里巴巴（领投）、高瓴投资（Hillhouse）、红杉中国（HongShan）、IDG 资本、腾讯、米哈游（MiHoYo）</p>
+<h3 id="23-ai">2.3 AI 业务布局</h3>
+<h4 id="_2">大模型系列</h4>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MiniMax-01</td>
+<td>基础大语言模型</td>
+</tr>
+<tr>
+<td>MiniMax-Text-01</td>
+<td>文本生成模型</td>
+</tr>
+<tr>
+<td>Speech-01 / Speech-02</td>
+<td>语音合成模型，支持 30+ 种语言</td>
+</tr>
+<tr>
+<td>M1</td>
+<td>早期模型</td>
+</tr>
+<tr>
+<td>M2.5</td>
+<td>中期迭代模型（GitHub 581 stars）</td>
+</tr>
+<tr>
+<td>M2.7</td>
+<td>最新模型迭代（GitHub 307 stars）</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_3">核心产品矩阵</h4>
+<table>
+<thead>
+<tr>
+<th>产品</th>
+<th>类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>海螺 AI (Hailuo AI)</strong></td>
+<td>视频/音频生成平台</td>
+<td>2024 年 3 月推出，支持文生视频、图生视频、音频生成；freemium 模式</td>
+</tr>
+<tr>
+<td><strong>Talkie</strong></td>
+<td>AI 角色聊天</td>
+<td>2023 年 6 月国际版上线，2024 年 7 月约 1100 万 MAU，美国最受欢迎的免费娱乐应用之一</td>
+</tr>
+<tr>
+<td><strong>星野 (Xingye)</strong></td>
+<td>AI 角色聊天（国内版）</td>
+<td>2023 年 9 月上线，Talkie 的中国市场版本</td>
+</tr>
+<tr>
+<td><strong>MiniMax MCP</strong></td>
+<td>开发者工具</td>
+<td>文生语音、图像生成、视频生成 API</td>
+</tr>
+<tr>
+<td><strong>Mini-Agent</strong></td>
+<td>Agent 框架</td>
+<td>展示 Agent 执行管线的演示项目</td>
+</tr>
+<tr>
+<td><strong>OpenRoom</strong></td>
+<td>AI 桌面</td>
+<td>浏览器端桌面，AI Agent 通过自然语言操作应用</td>
+</tr>
+</tbody>
+</table>
+<h3 id="24">2.4 核心竞争力</h3>
+<ol>
+<li><strong>多模态能力领先</strong>：文本、语音、图像、视频、音乐全模态覆盖，尤其是语音合成（Speech-02 支持 30+ 语言）和视频生成（Hailuo AI）</li>
+<li><strong>语音合成技术</strong>：Speech-01/02 系列在语音合成领域具有竞争力，支持多语言多音色</li>
+<li><strong>海外拓展成功</strong>：Talkie 在美国市场表现突出，是中国 AI 出海最成功的案例之一</li>
+<li><strong>游戏行业基因</strong>：米哈游作为早期投资者，团队对娱乐和角色交互场景理解深刻</li>
+<li><strong>轻量高效团队</strong>：~200 人团队支撑多个产品线，人效比高</li>
+</ol>
+<h3 id="25">2.5 财务数据</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IPO 时间</td>
+<td>2026 年 1 月 9 日（港交所，股票代码 SEHK 100）</td>
+</tr>
+<tr>
+<td>IPO 前估值</td>
+<td>~25 亿美元（2024 年 3 月融资估值）</td>
+</tr>
+<tr>
+<td>营收</td>
+<td>未公开详细数据（上市前为非上市公司）</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>注：MiniMax 作为 2026 年 1 月新上市公司，详细财务数据需参考其港股招股书。</p>
+</blockquote>
+<h3 id="26">2.6 主要客户和合作伙伴</h3>
+<ul>
+<li><strong>投资方兼合作方</strong>：阿里巴巴、腾讯、米哈游</li>
+<li><strong>投资者</strong>：高瓴投资、红杉中国、IDG 资本</li>
+<li><strong>海外市场</strong>：Talkie 在北美、欧洲等市场运营</li>
+<li><strong>开发者生态</strong>：通过 MCP、Mini-Agent 等工具构建开发者社区</li>
+</ul>
+<h3 id="27">2.7 竞争格局</h3>
+<table>
+<thead>
+<tr>
+<th>竞争对手</th>
+<th>差异化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>智谱 AI</td>
+<td>清华学术背景，B 端强</td>
+</tr>
+<tr>
+<td>月之暗面（Kimi）</td>
+<td>长文本处理</td>
+</tr>
+<tr>
+<td>字节跳动（豆包）</td>
+<td>流量优势</td>
+</tr>
+<tr>
+<td>DeepSeek</td>
+<td>极致性价比</td>
+</tr>
+<tr>
+<td>百度（文心一言）</td>
+<td>搜索+AI 整合</td>
+</tr>
+<tr>
+<td>Character.ai</td>
+<td>海外 AI 角色聊天直接竞争对手</td>
+</tr>
+<tr>
+<td>Runway / Pika</td>
+<td>海外视频生成直接竞争对手</td>
+</tr>
+</tbody>
+</table>
+<h3 id="28">2.8 风险与挑战</h3>
+<ul>
+<li><strong>版权诉讼</strong>：2025 年 9 月，迪士尼、环球影业、华纳兄弟发现频道起诉 MiniMax 侵权</li>
+<li><strong>Anthropic 指控</strong>：2026 年 2 月，Anthropic 指控 MiniMax 未经授权使用 Claude 进行模型训练</li>
+<li><strong>美国实体清单风险</strong>：作为中国 AI 公司，面临潜在的出口管制风险</li>
+<li><strong>竞争激烈</strong>：国内大模型市场竞争白热化，需要持续投入研发</li>
+</ul>
+<hr />
+<h2 id="_4">三、两家公司对比</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>智谱 AI (Z.ai)</th>
+<th>MiniMax</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>成立时间</td>
+<td>2019 年</td>
+<td>2021 年 12 月</td>
+</tr>
+<tr>
+<td>创始背景</td>
+<td>清华大学计算机系</td>
+<td>商汤科技 CV 团队</td>
+</tr>
+<tr>
+<td>IPO 时间</td>
+<td>2026 年 1 月</td>
+<td>2026 年 1 月 9 日</td>
+</tr>
+<tr>
+<td>IPO 前估值</td>
+<td>~30 亿美元</td>
+<td>~25 亿美元</td>
+</tr>
+<tr>
+<td>核心模型</td>
+<td>GLM 系列</td>
+<td>MiniMax-01 / M 系列</td>
+</tr>
+<tr>
+<td>旗舰产品</td>
+<td>智谱清言、ChatGLM、CodeGeeX</td>
+<td>海螺 AI、Talkie、星野</td>
+</tr>
+<tr>
+<td>技术强项</td>
+<td>NLP、代码生成、学术研究</td>
+<td>多模态、语音合成、视频生成</td>
+</tr>
+<tr>
+<td>市场策略</td>
+<td>B 端为主 + 开源生态</td>
+<td>C 端为主 + 海外出海</td>
+</tr>
+<tr>
+<td>代表成就</td>
+<td>中国第三大大模型厂商（IDC）</td>
+<td>Talkie 美国娱乐应用 Top 下载</td>
+</tr>
+<tr>
+<td>开源程度</td>
+<td>高（GLM 系列持续开源，MIT 许可）</td>
+<td>中等（GitHub 开源部分模型）</td>
+</tr>
+<tr>
+<td>主要风险</td>
+<td>美国实体清单、算力瓶颈</td>
+<td>版权诉讼、AI 训练合规争议</td>
+</tr>
+<tr>
+<td>共同投资者</td>
+<td>阿里巴巴、腾讯、红杉中国</td>
+<td>阿里巴巴、腾讯、红杉中国</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_5">四、行业背景</h2>
+<h3 id="_6">中国大模型"六小虎"</h3>
+<p>智谱 AI 和 MiniMax 均属于中国 AI 创业公司中的"六小虎"（与月之暗面、零一万物、百川智能、阶跃星辰并列），区别于 BAT 等大厂的 AI 布局。</p>
+<h3 id="ai-ipo">港股 AI IPO 潮</h3>
+<p>2026 年 1 月，智谱 AI 和 MiniMax 几乎同时完成港交所上市，标志着中国大模型公司进入资本市场新阶段。两家公司均在上市前获得了数十亿美元的估值。</p>
+<h3 id="ai">中美 AI 竞争</h3>
+<p>两家公司均面临美国实体清单的潜在或实际影响，但同时也在积极发展国产芯片适配能力（如智谱 AI 在寒武纪芯片上的量化推理）和海外市场拓展（如 MiniMax 的 Talkie）。</p>
+<hr />
+<p><em>本文档基于 2026 年 5 月的公开信息整理，财务数据以各公司港股招股书为准。</em></p></div>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle sidebar nav groups
+  document.querySelectorAll('.nav-group-title').forEach(function(el) {
+    el.addEventListener('click', function() {
+      this.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Backlinks: toggle individual groups
+  document.querySelectorAll('.bl-group-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+      this.closest('.bl-group').classList.toggle('open');
+    });
+  });
+
+  // Backlinks: expand/collapse all
+  document.querySelectorAll('.bl-expand-all').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      this.closest('.backlinks-panel').querySelectorAll('.bl-group').forEach(function(g) {
+        g.classList.add('open');
+      });
+    });
+  });
+  document.querySelectorAll('.bl-collapse-all').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      this.closest('.backlinks-panel').querySelectorAll('.bl-group').forEach(function(g) {
+        g.classList.remove('open');
+      });
+    });
+  });
+});
+</script>
+</body>
+</html>

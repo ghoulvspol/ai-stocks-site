@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>hk-ai - AI 板块知识图谱</title>
+<link rel="icon" type="image/svg+xml" href="/claude-harness-site/assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/claude-harness-site/assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/claude-harness-site/assets/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/claude-harness-site/assets/favicon-180.png">
+<link rel="shortcut icon" href="/claude-harness-site/assets/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#FAF7F2;
+  --bg2:#F3EDE4;
+  --text:#1B1B18;
+  --text2:#6B6560;
+  --gold:#B8860B;
+  --gold-light:#D4A843;
+  --gold-glow:rgba(184,134,11,.12);
+  --navy:#1A2332;
+  --navy-light:#2C3E50;
+  --cream:#FFF8EE;
+  --border:#E0D6C8;
+  --card:#FFFFFF;
+  --link:#8B5E0B;
+  --serif:'Noto Serif SC','Crimson Pro',Georgia,'Times New Roman',serif;
+  --sans:'DM Sans',-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  --sidebar-w:260px;
+}
+
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  font-family:var(--sans);
+  color:var(--text);
+  background:var(--bg);
+  display:flex;
+  min-height:100vh;
+  line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width:var(--sidebar-w);
+  background:var(--navy);
+  position:fixed;top:0;left:0;bottom:0;
+  overflow-y:auto;
+  z-index:100;
+  display:flex;
+  flex-direction:column;
+}
+.sidebar-header{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.logo{
+  color:#fff;
+  font-size:17px;
+  font-weight:700;
+  text-decoration:none;
+  letter-spacing:.5px;
+  font-family:var(--serif);
+  display:block;
+}
+.logo:hover{color:var(--gold-light)}
+
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sidebar-nav::-webkit-scrollbar{width:4px}
+.sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+
+.nav-link{
+  display:block;
+  padding:6px 16px;
+  color:#cbd5e1;
+  text-decoration:none;
+  font-size:13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  border-left:3px solid transparent;
+  transition:all .15s;
+}
+.nav-link:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-link.active{
+  color:#fff;
+  background:rgba(184,134,11,.15);
+  border-left-color:var(--gold);
+  font-weight:600;
+}
+.nav-home{font-size:14px;padding:10px 16px;font-weight:500;margin-bottom:4px}
+.nav-changelog{
+  margin-top:auto;
+  padding:14px 16px;
+  font-size:12px;
+  color:rgba(255,255,255,.4);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.nav-changelog:hover{color:rgba(255,255,255,.7)}
+.nav-changelog.active{color:var(--gold-light)}
+.sidebar-nav{display:flex;flex-direction:column;height:100%}
+
+.nav-group{margin-bottom:2px}
+.nav-group-title{
+  padding:8px 16px;
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  user-select:none;
+  transition:color .15s;
+}
+.nav-group-title:hover{color:#fff}
+.caret{
+  display:inline-block;
+  width:0;height:0;
+  border-left:5px solid #cbd5e1;
+  border-top:4px solid transparent;
+  border-bottom:4px solid transparent;
+  transition:transform .2s;
+}
+.nav-group.open .nav-group-title .caret{transform:rotate(90deg);border-left-color:#fff}
+.nav-group-title .badge{
+  margin-left:auto;
+  background:rgba(255,255,255,.1);
+  color:#cbd5e1;
+  font-size:11px;
+  padding:1px 6px;
+  border-radius:8px;
+  font-weight:400;
+}
+.nav-group-items{display:none;padding-left:8px}
+.nav-group.open .nav-group-items{display:block}
+
+.hamburger{
+  display:none;
+  position:fixed;
+  top:12px;left:12px;
+  z-index:200;
+  background:var(--navy);
+  color:#fff;
+  border:none;
+  font-size:20px;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* ===== MAIN ===== */
+.main{
+  margin-left:max(var(--sidebar-w), calc((100vw - 1160px) / 2));
+  flex:1;
+  position:relative;
+  max-width:1160px;
+  padding:0;
+}
+
+/* grain overlay */
+.main::after{
+  content:'';
+  position:fixed;
+  top:0;left:var(--sidebar-w);right:0;bottom:0;
+  pointer-events:none;
+  opacity:.03;
+  z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===== ARTICLE (content pages) ===== */
+.article{max-width:820px;padding:48px 48px 80px}
+.meta{
+  font-size:13px;
+  color:var(--text2);
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.type-badge{
+  font-size:11px;
+  padding:2px 8px;
+  border-radius:4px;
+  color:#fff;
+  font-weight:600;
+}
+.type-概念{background:#7C5E2A}
+.type-方法{background:#5E4A8B}
+.type-产品{background:#1A6B7C}
+.type-索引{background:#6B6560}
+
+.article h1{
+  font-family:var(--serif);
+  font-size:28px;
+  line-height:1.3;
+  margin-bottom:24px;
+  font-weight:900;
+  color:var(--navy);
+  letter-spacing:-.5px;
+}
+.article h2{
+  font-family:var(--serif);
+  font-size:21px;
+  margin:36px 0 14px;
+  padding-bottom:8px;
+  border-bottom:2px solid var(--border);
+  font-weight:700;
+  color:var(--navy);
+}
+.article h3{
+  font-family:var(--serif);
+  font-size:17px;
+  margin:24px 0 10px;
+  font-weight:600;
+  color:var(--navy-light);
+}
+.article p{margin:10px 0}
+.article ul,.article ol{padding-left:24px;margin:10px 0}
+.article li{margin:4px 0}
+
+.article a{
+  color:var(--link);
+  text-decoration:none;
+  background:linear-gradient(to bottom,transparent 60%,var(--gold-glow) 60%);
+  transition:background .2s;
+}
+.article a:hover{background:linear-gradient(to bottom,transparent 40%,rgba(184,134,11,.2) 40%)}
+
+.article blockquote{
+  background:var(--cream);
+  border-left:4px solid var(--gold);
+  padding:14px 20px;
+  margin:16px 0;
+  border-radius:0 8px 8px 0;
+  font-style:italic;
+  color:#5C4813;
+  font-family:var(--serif);
+}
+.article blockquote p{margin:0}
+.article blockquote a{background:none;color:var(--gold)}
+.article blockquote a:hover{text-decoration:underline}
+
+.article table{border-collapse:collapse;width:100%;margin:16px 0;font-size:14px}
+.article th,.article td{border:1px solid var(--border);padding:8px 12px;text-align:left}
+.article th{background:var(--bg2);font-weight:600;color:var(--navy)}
+.article strong{font-weight:700}
+.article hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+.article code{
+  background:var(--bg2);
+  padding:2px 6px;
+  border-radius:3px;
+  font-size:13px;
+  font-family:'SF Mono',Menlo,Consolas,monospace;
+  color:#5C4813;
+}
+
+/* ===== BACKLINKS PANEL (right sidebar) ===== */
+.main.has-backlinks{
+  display:grid;
+  grid-template-columns:minmax(0,820px) 280px;
+  gap:0 24px;
+  max-width:1160px;
+}
+.main-content{min-width:0}
+
+.backlinks-panel{
+  grid-column:2;
+  grid-row:1/-1;
+  position:sticky;
+  top:24px;
+  max-height:calc(100vh - 48px);
+  overflow-y:auto;
+  padding:24px 0 24px 20px;
+  border-left:1px solid var(--border);
+  font-size:13px;
+  align-self:start;
+}
+.backlinks-panel::-webkit-scrollbar{width:3px}
+.backlinks-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.bl-panel-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.bl-panel-title{
+  font-family:var(--serif);
+  font-size:14px;
+  font-weight:700;
+  color:var(--navy);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.bl-count{
+  font-size:11px;
+  background:var(--bg2);
+  padding:1px 7px;
+  border-radius:10px;
+  color:var(--text2);
+  font-weight:600;
+}
+.bl-panel-actions{display:flex;gap:4px}
+.bl-action{
+  background:none;
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:2px 8px;
+  font-size:11px;
+  color:var(--text2);
+  cursor:pointer;
+  font-family:var(--sans);
+  transition:all .15s;
+}
+.bl-action:hover{border-color:var(--gold);color:var(--gold)}
+
+.bl-group{margin-bottom:4px}
+.bl-group-header{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:5px 0;
+  width:100%;
+  text-align:left;
+  font-size:13px;
+  font-family:var(--sans);
+}
+.bl-group-header:hover{background:rgba(0,0,0,.02);border-radius:4px}
+
+.bl-caret{
+  display:inline-block;
+  width:0;height:0;
+  border:4px solid transparent;
+  border-left:5px solid var(--text2);
+  transition:transform .15s;
+  flex-shrink:0;
+}
+.bl-group.open .bl-caret{transform:rotate(90deg)}
+
+.bl-source-name{
+  color:var(--navy);
+  font-weight:600;
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.bl-mention-cat{
+  font-size:10px;
+  color:var(--text2);
+  background:var(--bg2);
+  padding:0 5px;
+  border-radius:8px;
+  flex-shrink:0;
+  margin-left:4px;
+}
+
+.bl-snippets{display:none;padding:4px 0 4px 14px}
+.bl-group.open .bl-snippets{display:block}
+
+.bl-snippet{
+  padding:6px 0;
+  border-bottom:1px solid var(--border);
+  line-height:1.6;
+  color:var(--text2);
+  font-size:12px;
+}
+.bl-snippet:last-child{border-bottom:none}
+.bl-go-link{
+  display:inline-block;
+  font-size:11px;
+  color:var(--link);
+  text-decoration:none;
+  padding:4px 0 2px;
+  font-weight:600;
+  transition:color .15s;
+}
+.bl-go-link:hover{color:var(--gold);text-decoration:underline}
+
+/* ===== HOMEPAGE ===== */
+.hero-section{
+  position:relative;
+  padding:72px 48px 56px;
+  max-width:900px;
+  margin:0 auto;
+}
+.hero-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:20px;
+  opacity:0;
+  animation:fadeUp .6s ease forwards;
+}
+.hero-eyebrow::before{content:'';width:24px;height:1px;background:var(--gold)}
+.hero-title{
+  font-family:var(--serif);
+  font-size:clamp(32px,5vw,48px);
+  font-weight:900;
+  line-height:1.25;
+  letter-spacing:-1px;
+  color:var(--navy);
+  margin-bottom:6px;
+  opacity:0;
+  animation:fadeUp .6s ease .1s forwards;
+}
+.hero-title .gold{color:var(--gold)}
+.hero-sub{
+  font-size:17px;
+  color:var(--text2);
+  line-height:1.8;
+  margin-top:16px;
+  max-width:640px;
+  font-family:var(--serif);
+  font-weight:400;
+  opacity:0;
+  animation:fadeUp .6s ease .2s forwards;
+}
+.hero-sub b{color:var(--navy);font-weight:700}
+
+.stats-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0;
+  max-width:900px;
+  margin:0 auto 48px;
+  padding:0 48px;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  opacity:0;
+  animation:fadeUp .6s ease .3s forwards;
+}
+.stat-item{
+  text-align:center;
+  padding:28px 12px;
+  position:relative;
+  transition:background .3s;
+  text-decoration:none;
+  color:inherit;
+}
+.stat-item:not(:last-child)::after{
+  content:'';
+  position:absolute;
+  right:0;top:20%;
+  height:60%;
+  width:1px;
+  background:var(--border);
+}
+.stat-item:hover{background:var(--gold-glow)}
+.stat-num{
+  font-family:var(--serif);
+  font-size:42px;
+  font-weight:900;
+  color:var(--navy);
+  line-height:1;
+  margin-bottom:6px;
+  letter-spacing:-2px;
+}
+.stat-label{
+  font-size:13px;
+  color:var(--text2);
+  font-weight:500;
+  letter-spacing:.5px;
+}
+
+.main-inner{max-width:900px;padding:0 48px 80px;margin:0 auto}
+
+.nav-cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:56px;
+  opacity:0;
+  animation:fadeUp .6s ease .4s forwards;
+}
+.nav-card{
+  position:relative;
+  padding:28px 20px 24px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  text-decoration:none;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  display:block;
+  color:inherit;
+}
+.nav-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+  background:var(--gold);
+  opacity:0;
+  transition:opacity .3s;
+}
+.nav-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 12px 32px rgba(0,0,0,.08);
+  border-color:var(--gold-light);
+}
+.nav-card:hover::before{opacity:1}
+.nav-card-icon{font-size:32px;margin-bottom:14px;display:block;line-height:1}
+.nav-card-title{
+  font-family:var(--serif);
+  font-size:16px;
+  font-weight:700;
+  color:var(--navy);
+  margin-bottom:4px;
+}
+.nav-card-sub{font-size:13px;color:var(--text2)}
+.nav-card-arrow{
+  position:absolute;
+  bottom:20px;right:20px;
+  font-size:18px;
+  color:var(--border);
+  transition:all .3s;
+}
+.nav-card:hover .nav-card-arrow{color:var(--gold);transform:translateX(4px)}
+
+.section{margin-bottom:48px}
+.section-header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.section-line{flex:1;height:1px;background:var(--border)}
+.section-title{
+  font-family:var(--serif);
+  font-size:22px;
+  font-weight:700;
+  color:var(--navy);
+  white-space:nowrap;
+}
+.section-count{
+  font-size:12px;
+  color:var(--gold);
+  font-weight:600;
+  background:var(--gold-glow);
+  padding:3px 10px;
+  border-radius:12px;
+  white-space:nowrap;
+}
+
+.tag-cloud{display:flex;flex-wrap:wrap;gap:10px}
+.tag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 18px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:24px;
+  font-size:14px;
+  color:var(--text);
+  text-decoration:none;
+  transition:all .25s cubic-bezier(.4,0,.2,1);
+  font-weight:500;
+}
+.tag:hover{
+  border-color:var(--gold);
+  color:var(--navy);
+  box-shadow:0 4px 16px var(--gold-glow);
+  transform:translateY(-2px);
+}
+.tag-n{
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  background:var(--gold);
+  padding:2px 8px;
+  border-radius:10px;
+  min-width:20px;
+  text-align:center;
+}
+.tag.tier-1{
+  font-size:16px;
+  padding:10px 22px;
+  font-weight:700;
+  border-color:var(--gold-light);
+  background:linear-gradient(135deg,#FFFDF5,#FFF8E7);
+}
+.tag.tier-1 .tag-n{font-size:12px;padding:3px 10px;background:var(--gold)}
+.tag.tier-2{font-size:15px;padding:9px 20px;font-weight:600}
+
+.gold-divider{display:flex;align-items:center;gap:16px;margin:56px 0}
+.gold-divider::before,.gold-divider::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:linear-gradient(to right,transparent,var(--border),transparent);
+}
+.gold-divider-diamond{
+  width:8px;height:8px;
+  background:var(--gold);
+  transform:rotate(45deg);
+  flex-shrink:0;
+}
+
+.footer-promo{
+  position:relative;
+  overflow:hidden;
+  padding:40px;
+  background:var(--navy);
+  border-radius:20px;
+  color:#fff;
+  display:flex;
+  gap:40px;
+  align-items:center;
+}
+.footer-promo::before{
+  content:'';
+  position:absolute;
+  top:-50%;right:-20%;
+  width:400px;height:400px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(184,134,11,.15),transparent 70%);
+}
+.promo-story{flex:1;position:relative;z-index:1;min-width:0}
+.promo-story h3{
+  font-family:var(--serif);
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:12px;
+  color:var(--gold-light);
+}
+.promo-story p{font-size:14px;color:rgba(255,255,255,.75);line-height:1.8;margin:8px 0}
+.promo-credit{
+  margin-top:16px !important;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.12);
+  font-size:13px !important;
+}
+.promo-credit strong{color:var(--gold-light);font-weight:700}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.section{opacity:0;animation:fadeUp .5s ease forwards}
+.section:nth-child(1){animation-delay:.45s}
+.section:nth-child(2){animation-delay:.55s}
+.section:nth-child(3){animation-delay:.65s}
+.section:nth-child(4){animation-delay:.75s}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1024px){
+  .main.has-backlinks{display:block}
+  .backlinks-panel{
+    position:static;
+    max-height:none;
+    overflow-y:visible;
+    border-left:none;
+    border-top:1px solid var(--border);
+    padding:24px 16px;
+    margin-top:24px;
+    max-width:820px;
+  }
+}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:block}
+  .main{margin-left:0;max-width:100%}
+  .main::after{left:0}
+  .main.has-backlinks{display:block}
+  .article{padding:48px 16px 60px}
+  .backlinks-panel{padding:16px 12px;margin-top:16px}
+  .hero-section{padding:44px 20px 20px}
+  .hero-eyebrow{font-size:10px;margin-bottom:12px}
+  .hero-title{font-size:26px}
+  .hero-sub{font-size:14px;line-height:1.6;margin-top:10px}
+  .stats-row{padding:0 16px;margin:0 0 20px}
+  .stat-item{padding:16px 4px}
+  .stat-num{font-size:28px;letter-spacing:-1px}
+  .stat-label{font-size:11px}
+  .main-inner{padding:0 20px 60px}
+  .nav-cards{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:36px}
+  .nav-card{padding:20px 14px 18px}
+  .nav-card-icon{font-size:24px;margin-bottom:8px}
+  .nav-card-title{font-size:14px}
+  .nav-card-sub{font-size:12px}
+  .footer-promo{flex-direction:column;text-align:center;padding:28px 20px;gap:24px}
+}
+</style>
+</head>
+<body>
+<button class="hamburger" aria-label="菜单" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+<aside class="sidebar">
+  <div class="sidebar-header"><a href="/ai-stocks-site/index.html" class="logo">AI 板块知识图谱</a></div>
+  <div class="sidebar-nav">
+    <a href="/ai-stocks-site/index.html" class="nav-link nav-home">🏛 首页</a>
+<div class="nav-group open">
+  <div class="nav-group-title"><span class="caret"></span>索引<span class="badge">4</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/index-pages/AI大厂索引.html" class="nav-link" title="AI大厂索引">AI大厂索引</a>
+    <a href="/ai-stocks-site/index-pages/AI芯片索引.html" class="nav-link" title="AI芯片索引">AI芯片索引</a>
+    <a href="/ai-stocks-site/index-pages/核心概念索引.html" class="nav-link" title="核心概念索引">核心概念索引</a>
+    <a href="/ai-stocks-site/index-pages/港股AI索引.html" class="nav-link" title="港股AI索引">港股AI索引</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>AI 芯片<span class="badge">1</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/us-chips/us-chips.html" class="nav-link" title="us-chips">us-chips</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>AI 大厂<span class="badge">1</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/us-bigtech/us-bigtech.html" class="nav-link" title="us-bigtech">us-bigtech</a>
+  </div>
+</div>
+<div class="nav-group open">
+  <div class="nav-group-title"><span class="caret"></span>港股 AI<span class="badge">5</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/hk-ai/MiniMax.html" class="nav-link" title="MiniMax">MiniMax</a>
+    <a href="/ai-stocks-site/hk-ai/china-ai-extra.html" class="nav-link" title="china-ai-extra">china-ai-extra</a>
+    <a href="/ai-stocks-site/hk-ai/hk-ai.html" class="nav-link active" title="hk-ai">hk-ai</a>
+    <a href="/ai-stocks-site/hk-ai/小米.html" class="nav-link" title="小米">小米</a>
+    <a href="/ai-stocks-site/hk-ai/智谱 AI.html" class="nav-link" title="智谱 AI">智谱 AI</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>概念<span class="badge">8</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/concepts/AI 云服务.html" class="nav-link" title="AI 云服务">AI 云服务</a>
+    <a href="/ai-stocks-site/concepts/AI 产业链全景.html" class="nav-link" title="AI 产业链全景">AI 产业链全景</a>
+    <a href="/ai-stocks-site/concepts/AI 大模型竞争.html" class="nav-link" title="AI 大模型竞争">AI 大模型竞争</a>
+    <a href="/ai-stocks-site/concepts/AI 开源 vs 闭源.html" class="nav-link" title="AI 开源 vs 闭源">AI 开源 vs 闭源</a>
+    <a href="/ai-stocks-site/concepts/AI 投资逻辑.html" class="nav-link" title="AI 投资逻辑">AI 投资逻辑</a>
+    <a href="/ai-stocks-site/concepts/AI 芯片产业链.html" class="nav-link" title="AI 芯片产业链">AI 芯片产业链</a>
+    <a href="/ai-stocks-site/concepts/中国 AI 产业.html" class="nav-link" title="中国 AI 产业">中国 AI 产业</a>
+    <a href="/ai-stocks-site/concepts/端侧 AI.html" class="nav-link" title="端侧 AI">端侧 AI</a>
+  </div>
+</div>
+<div class="nav-group">
+  <div class="nav-group-title"><span class="caret"></span>方法<span class="badge">3</span></div>
+  <div class="nav-group-items">
+    <a href="/ai-stocks-site/methods/AI 产业链分析方法.html" class="nav-link" title="AI 产业链分析方法">AI 产业链分析方法</a>
+    <a href="/ai-stocks-site/methods/AI 公司估值方法.html" class="nav-link" title="AI 公司估值方法">AI 公司估值方法</a>
+    <a href="/ai-stocks-site/methods/AI 公司对比方法.html" class="nav-link" title="AI 公司对比方法">AI 公司对比方法</a>
+  </div>
+</div>
+
+  </div>
+</aside>
+<main class="main">
+<div class="article"><h1 id="ai">港股 AI 板块核心公司分析报告</h1>
+<blockquote>
+<p>数据截止：2025年Q1财报 / 2024年全年业绩<br />
+财务数据来源：各公司2024年年报、2025年Q1季报<br />
+汇率参考：1 HKD ≈ 0.92 RMB，1 USD ≈ 7.25 RMB</p>
+</blockquote>
+<hr />
+<h2 id="0700hk">一、腾讯控股 (0700.HK)</h2>
+<h3 id="_1">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>0700.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>社交（微信/QQ）、游戏、广告、金融科技、云计算</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 4.2 万亿港元（~5,400 亿美元）</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~10 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_1">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>混元大模型（Hunyuan）</strong>：自研通用大模型，参数规模达万亿级。2024年发布混元Turbo/SPro/Mini等多个版本，支持文本、图像、视频、3D生成<br />
+- <strong>腾讯云AI</strong>：提供MaaS（模型即服务）、AI开发平台、向量数据库等<br />
+- <strong>游戏AI</strong>：AI NPC、程序化内容生成（PCG）、AI辅助美术/测试<br />
+- <strong>广告AI</strong>：基于大模型的智能投放、素材生成、精准推荐<br />
+- <strong>微信AI</strong>：微信内的AI搜索、智能助手、小程序AI能力</p>
+<p><strong>AI投入规模：</strong><br />
+- 2024年研发支出约 614 亿元，其中AI占主要部分<br />
+- GPU算力储备位居国内前列<br />
+- 混元模型已在内部超过400个业务场景落地</p>
+<h3 id="_2">核心竞争力</h3>
+<ul>
+<li><strong>社交生态壁垒</strong>：微信13亿+月活构成AI应用的超级入口</li>
+<li><strong>游戏AI领先</strong>：全球最大游戏公司，AI技术深度融入游戏研发全链路</li>
+<li><strong>云+AI一体化</strong>：腾讯云AI能力持续提升，ToB市场拓展</li>
+<li><strong>数据飞轮</strong>：海量用户数据支撑模型持续优化</li>
+<li><strong>投资生态</strong>：投资了大量AI初创公司（如MiniMax、智谱AI等）</li>
+</ul>
+<h3 id="2024">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>6,602 亿元</td>
+<td>+8%</td>
+</tr>
+<tr>
+<td>Non-IFRS净利润</td>
+<td>2,227 亿元</td>
+<td>+41%</td>
+</tr>
+<tr>
+<td>经营利润率</td>
+<td>~34%</td>
+<td>提升</td>
+</tr>
+<tr>
+<td>自由现金流</td>
+<td>1,977 亿元</td>
+<td></td>
+</tr>
+<tr>
+<td>游戏收入</td>
+<td>~1,977 亿元</td>
+<td></td>
+</tr>
+<tr>
+<td>广告收入</td>
+<td>1,214 亿元</td>
+<td>+20%</td>
+</tr>
+<tr>
+<td>金融科技及企业服务</td>
+<td>2,120 亿元</td>
+<td>+4%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">产业链位置</h3>
+<ul>
+<li><strong>中游+下游</strong>：既是AI基础设施提供者（云、模型），又是AI应用的终端场景（游戏、社交、广告）</li>
+</ul>
+<h3 id="_4">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：C端用户（微信/QQ）、B端企业（腾讯云客户）、游戏开发者</li>
+<li><strong>竞争对手</strong>：</li>
+<li>社交/游戏：网易、字节跳动</li>
+<li>云计算：阿里云、华为云</li>
+<li>AI大模型：百度文心、阿里通义、字节豆包</li>
+</ul>
+<hr />
+<h2 id="9988hk">二、阿里巴巴 (9988.HK)</h2>
+<h3 id="_5">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>9988.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>电商（淘宝/天猫）、云计算（阿里云）、物流（菜鸟）、本地生活</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 2.0 万亿港元（~2,600 亿美元）</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~20 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_2">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>通义千问（Qwen）</strong>：开源大模型系列，Qwen2.5系列在多项基准测试中位列全球前列。Qwen-Max/Qwen-Plus/Qwen-Tier多档位产品<br />
+- <strong>阿里云AI</strong>：百炼大模型服务平台、PAI机器学习平台、ModelScope模型社区<br />
+- <strong>电商AI</strong>：淘宝问问（AI购物助手）、AI生成商品图/视频、智能客服<br />
+- <strong>钉钉AI</strong>：AI助理、智能会议纪要、AI应用生成器<br />
+- <strong>AI芯片</strong>：平头哥自研含光系列AI推理芯片</p>
+<p><strong>AI投入规模：</strong><br />
+- 阿里云AI相关收入连续多个季度保持双位数增长<br />
+- Qwen系列开源模型在Hugging Face下载量累计超1亿次<br />
+- 2025年宣布未来三年AI基础设施投入将超过过去十年总和</p>
+<h3 id="_6">核心竞争力</h3>
+<ul>
+<li><strong>开源生态领先</strong>：Qwen是最受欢迎的中文开源大模型之一，生态覆盖全球开发者</li>
+<li><strong>云+AI深度整合</strong>：阿里云是中国最大公有云厂商，AI是核心增长引擎</li>
+<li><strong>电商AI场景</strong>：海量商业数据和交易场景，AI商业化落地快</li>
+<li><strong>自研芯片</strong>：平头哥含光800等芯片降低AI推理成本</li>
+<li><strong>开源策略</strong>：通过开源建立生态护城河，吸引开发者和企业客户</li>
+</ul>
+<h3 id="fy202420243">财务数据（FY2024，截至2024年3月）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>9,412 亿元</td>
+<td>+8%</td>
+</tr>
+<tr>
+<td>经调整净利润</td>
+<td>1,575 亿元</td>
+<td>+11%</td>
+</tr>
+<tr>
+<td>阿里云收入</td>
+<td>1,064 亿元</td>
+<td>+3%</td>
+</tr>
+<tr>
+<td>阿里云EBITA</td>
+<td>142 亿元</td>
+<td>+49%</td>
+</tr>
+<tr>
+<td>国际电商收入</td>
+<td>1,002 亿元</td>
+<td>+46%</td>
+</tr>
+<tr>
+<td>自由现金流</td>
+<td>1,563 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>注：阿里巴巴财年为每年4月至次年3月。FY2025（截至2025年3月）业绩预计2025年5月公布。</p>
+<h3 id="_7">产业链位置</h3>
+<ul>
+<li><strong>上游+中游+下游</strong>：全产业链布局。上游（AI芯片平头哥）、中游（阿里云+大模型）、下游（电商/钉钉等AI应用）</li>
+</ul>
+<h3 id="_8">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：电商商家、企业云客户、开发者、个人用户</li>
+<li><strong>竞争对手</strong>：</li>
+<li>云计算：腾讯云、华为云、AWS、Azure</li>
+<li>AI大模型：百度文心、腾讯混元、字节豆包、DeepSeek</li>
+<li>电商：京东、拼多多、抖音电商</li>
+</ul>
+<hr />
+<h2 id="9888hk">三、百度集团 (9888.HK)</h2>
+<h3 id="_9">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>9888.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>搜索引擎、AI云、自动驾驶（Apollo）、智能驾驶（ANP）</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 2,500 亿港元（~320 亿美元）</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~3.6 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_3">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>文心一言（ERNIE Bot）</strong>：国内首个对标ChatGPT的大模型产品，用户超3亿。文心4.0 Turbo持续迭代<br />
+- <strong>文心大模型（ERNIE）</strong>：ERNIE系列模型，覆盖文本/代码/图像/视频理解与生成<br />
+- <strong>百度智能云</strong>：千帆大模型平台，企业级MaaS服务<br />
+- <strong>Apollo自动驾驶</strong>：萝卜快跑无人出租车，已在北京、武汉、重庆等城市运营<br />
+- <strong>小度智能硬件</strong>：AI智能音箱/屏，家庭AI入口<br />
+- <strong>百度地图AI</strong>：AI导航、智能出行</p>
+<p><strong>AI投入规模：</strong><br />
+- 文心一言API日均调用量超15亿次<br />
+- 萝卜快跑累计服务超800万单<br />
+- 2024年AI相关收入占总营收比重持续提升</p>
+<h3 id="_10">核心竞争力</h3>
+<ul>
+<li><strong>搜索+AI天然结合</strong>：搜索引擎是AI大模型最直接的应用场景</li>
+<li><strong>自动驾驶领先</strong>：Apollo是国内L4级自动驾驶的领跑者，萝卜快跑商业化运营</li>
+<li><strong>AI全栈能力</strong>：从昆仑芯片、飞桨框架到文心大模型的全栈自研</li>
+<li><strong>企业AI市场</strong>：千帆平台服务超10万家企业客户</li>
+<li><strong>搜索流量入口</strong>：百度搜索仍是国内最大搜索引擎</li>
+</ul>
+<h3 id="2024_1">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>1,331 亿元</td>
+<td>+1%</td>
+</tr>
+<tr>
+<td>Non-GAAP净利润</td>
+<td>270 亿元</td>
+<td>+10%</td>
+</tr>
+<tr>
+<td>百度核心收入</td>
+<td>1,047 亿元</td>
+<td>+1%</td>
+</tr>
+<tr>
+<td>AI Cloud收入</td>
+<td>~420 亿元</td>
+<td>+11%</td>
+</tr>
+<tr>
+<td>在线营销收入</td>
+<td>730 亿元</td>
+<td>-3%</td>
+</tr>
+<tr>
+<td>非在线营销收入</td>
+<td>317 亿元</td>
+<td>+12%</td>
+</tr>
+<tr>
+<td>自由现金流</td>
+<td>~200 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_11">产业链位置</h3>
+<ul>
+<li><strong>上游+中游+下游</strong>：上游（昆仑AI芯片、飞桨框架）、中游（文心大模型、千帆平台）、下游（搜索、自动驾驶、智能硬件）</li>
+</ul>
+<h3 id="_12">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：企业客户（AI Cloud）、广告主（搜索广告）、C端用户（搜索/文心一言）</li>
+<li><strong>竞争对手</strong>：</li>
+<li>搜索/AI：字节跳动（抖音搜索）、腾讯（微信搜一搜）</li>
+<li>大模型：阿里通义、腾讯混元、DeepSeek</li>
+<li>自动驾驶：小马智行、华为ADS、Waymo</li>
+</ul>
+<hr />
+<h2 id="0020hk">四、商汤科技 (0020.HK)</h2>
+<h3 id="_13">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>0020.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>AI视觉、大模型、智能汽车、智慧商业、AI基础设施</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 600 亿港元</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~5,000 人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_4">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>日日新大模型（SenseNova）</strong>：商汤自研大模型体系，涵盖语言、图像、代码、多模态<br />
+- <strong>SenseNova 5.5</strong>：2024年发布的新一代大模型，推理能力大幅提升<br />
+- <strong>商量（SenseChat）</strong>：对话式AI产品，面向C端和B端<br />
+- <strong>AI大装置（SenseCore）</strong>：大规模AI算力基础设施，GPU集群超5万张<br />
+- <strong>智能汽车</strong>：绝影智能驾驶平台，座舱AI+驾驶AI<br />
+- <strong>智慧商业/智慧城市</strong>：AI视觉解决方案</p>
+<p><strong>AI投入规模：</strong><br />
+- 上海临港AIDC（人工智能计算中心）算力超5,000 PFLOPS<br />
+- AI大装置管理GPU超5万张，是国内最大的AI计算平台之一<br />
+- 2024年大模型相关收入增长显著</p>
+<h3 id="_14">核心竞争力</h3>
+<ul>
+<li><strong>算力规模</strong>：拥有国内最大的AI算力集群之一</li>
+<li><strong>AI视觉技术</strong>：计算机视觉技术全球领先，学术论文引用量高</li>
+<li><strong>大装置+大模型</strong>：算力+模型的一体化能力</li>
+<li><strong>汽车智能化</strong>：与多家车企合作智能驾驶方案</li>
+<li><strong>创始人汤晓鸥遗产</strong>：学术界影响力深厚</li>
+</ul>
+<h3 id="2024_2">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>约 39 亿元</td>
+<td>持平</td>
+</tr>
+<tr>
+<td>生成式AI收入</td>
+<td>约 12 亿元</td>
+<td>+100%+</td>
+</tr>
+<tr>
+<td>智能汽车收入</td>
+<td>约 5 亿元</td>
+<td>增长</td>
+</tr>
+<tr>
+<td>毛利率</td>
+<td>~60%</td>
+<td></td>
+</tr>
+<tr>
+<td>经调整净亏损</td>
+<td>约 50 亿元</td>
+<td>亏损收窄</td>
+</tr>
+<tr>
+<td>现金储备</td>
+<td>约 100 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>注：商汤仍处于亏损期，但亏损持续收窄，生成式AI收入高速增长。</p>
+<h3 id="_15">产业链位置</h3>
+<ul>
+<li><strong>上游+中游</strong>：上游（AI算力基础设施/大装置）、中游（大模型/算法平台）</li>
+</ul>
+<h3 id="_16">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：车企（智能驾驶）、政府（智慧城市）、企业（AI视觉/大模型）</li>
+<li><strong>竞争对手</strong>：</li>
+<li>AI视觉：旷视科技、云从科技、依图科技</li>
+<li>大模型：百度文心、阿里通义、智谱AI</li>
+<li>智能驾驶：百度Apollo、华为ADS、Momenta</li>
+</ul>
+<hr />
+<h2 id="002230sz">五、科大讯飞 (002230.SZ)</h2>
+<h3 id="_17">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>002230.SZ（A股，港股通可交易）</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>语音AI、教育科技、智慧城市、开放平台</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 1,200 亿元</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~1.6 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_5">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>讯飞星火大模型（Spark）</strong>：星火4.0 Turbo版本，在中文理解、代码、数学等领域表现突出<br />
+- <strong>讯飞开放平台</strong>：超过500万开发者，日均调用超100亿次<br />
+- <strong>智慧教育</strong>：AI学习机、智慧课堂、个性化学习<br />
+- <strong>智能语音</strong>：语音识别、语音合成、语音翻译、同声传译<br />
+- <strong>医疗AI</strong>：智医助理，AI辅助诊疗<br />
+- <strong>智慧城市</strong>：城市超脑、政务服务AI</p>
+<p><strong>AI投入规模：</strong><br />
+- 星火大模型API开发者超80万<br />
+- 讯飞开放平台覆盖开发者超500万<br />
+- 教育AI覆盖全国5万+学校</p>
+<h3 id="_18">核心竞争力</h3>
+<ul>
+<li><strong>语音技术全球领先</strong>：语音识别、合成、翻译技术国际多次获奖</li>
+<li><strong>教育AI龙头</strong>：教育信息化市场占有率领先</li>
+<li><strong>国产化替代</strong>：全栈自主可控，深度适配国产芯片（华为昇腾）</li>
+<li><strong>政务AI积累深</strong>：在政府、教育、医疗等行业有深厚积累</li>
+<li><strong>产学研一体</strong>：与中国科学技术大学深度合作</li>
+</ul>
+<h3 id="2024_3">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>约 233 亿元</td>
+<td>+8%</td>
+</tr>
+<tr>
+<td>归母净利润</td>
+<td>约 7.5 亿元</td>
+<td>+15%</td>
+</tr>
+<tr>
+<td>扣非净利润</td>
+<td>约 4 亿元</td>
+<td>增长</td>
+</tr>
+<tr>
+<td>毛利率</td>
+<td>~40%</td>
+<td></td>
+</tr>
+<tr>
+<td>研发投入</td>
+<td>约 40 亿元</td>
+<td></td>
+</tr>
+<tr>
+<td>教育业务收入</td>
+<td>~60 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>注：科大讯飞为A股上市公司（002230.SZ），通过港股通机制可被港股投资者交易。</p>
+<h3 id="_19">产业链位置</h3>
+<ul>
+<li><strong>中游+下游</strong>：中游（大模型/语音技术平台）、下游（教育/医疗/政务等AI应用）</li>
+</ul>
+<h3 id="_20">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：政府机构、学校、医院、企业开发者</li>
+<li><strong>竞争对手</strong>：</li>
+<li>语音AI：思必驰、云知声</li>
+<li>教育AI：好未来、作业帮</li>
+<li>大模型：百度文心、阿里通义、华为盘古</li>
+</ul>
+<hr />
+<h2 id="3690hk">六、美团 (3690.HK)</h2>
+<h3 id="_21">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>3690.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>外卖、到店/酒旅、优选/买菜、快驴（供应链）、无人配送</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 8,500 亿港元（~1,100 亿美元）</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~10 万人（含骑手超700万）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_6">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>美团AI大模型</strong>：自研大模型应用于智能调度、智能客服、内容生成<br />
+- <strong>智能调度系统</strong>：AI驱动的骑手调度和路径优化，日均处理数千万订单<br />
+- <strong>无人配送</strong>：自动配送车（美团魔袋）和无人机配送，已在多个城市试点<br />
+- <strong>AI营销</strong>：AI驱动的商家营销工具、智能推荐<br />
+- <strong>美团AI助手</strong>：面向用户和商家的AI对话助手<br />
+- <strong>AI视觉</strong>：食品质量检测、骑手安全监控</p>
+<p><strong>AI投入规模：</strong><br />
+- 2024年研发投入约210亿元，AI占重要比重<br />
+- 无人配送车累计配送超500万单<br />
+- 无人机配送已在深圳等城市常态化运营</p>
+<h3 id="_22">核心竞争力</h3>
+<ul>
+<li><strong>本地生活AI场景</strong>：外卖、到店等场景天然适合AI优化</li>
+<li><strong>海量实时数据</strong>：日均数千万订单的实时数据是AI训练的金矿</li>
+<li><strong>无人配送先发</strong>：无人配送商业化进程国内领先</li>
+<li><strong>即时零售</strong>：AI驱动的即时零售（30分钟达）是核心壁垒</li>
+<li><strong>商家数字化</strong>：AI帮助商家降本增效</li>
+</ul>
+<h3 id="2024_4">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>3,374 亿元</td>
+<td>+18%</td>
+</tr>
+<tr>
+<td>经调整净利润</td>
+<td>438 亿元</td>
+<td>+88%</td>
+</tr>
+<tr>
+<td>经营利润率</td>
+<td>~13%</td>
+<td>提升</td>
+</tr>
+<tr>
+<td>外卖订单量</td>
+<td>~230 亿单</td>
+<td>+12%</td>
+</tr>
+<tr>
+<td>到店/酒旅收入</td>
+<td>~440 亿元</td>
+<td>+25%+</td>
+</tr>
+<tr>
+<td>研发支出</td>
+<td>~210 亿元</td>
+<td></td>
+</tr>
+<tr>
+<td>现金及等价物</td>
+<td>~1,500 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_23">产业链位置</h3>
+<ul>
+<li><strong>下游</strong>：面向终端消费者和本地商家，是AI在本地生活服务的核心应用平台</li>
+</ul>
+<h3 id="_24">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：C端消费者、本地商家、骑手</li>
+<li><strong>竞争对手</strong>：</li>
+<li>外卖/本地生活：饿了么（阿里）、抖音本地生活</li>
+<li>即时零售：京东到家、叮咚买菜</li>
+<li>无人配送：京东物流、阿里菜鸟</li>
+</ul>
+<hr />
+<h2 id="1810hk">七、小米集团 (1810.HK)</h2>
+<h3 id="_25">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>1810.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>智能手机、IoT与生活消费产品、互联网服务、智能电动汽车</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 1.0 万亿港元（~1,300 亿美元）</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~3.5 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_7">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>小爱同学</strong>：AI语音助手，月活用户超1.2亿，接入大模型能力<br />
+- <strong>小米大模型</strong>：自研MiLM大模型，端侧AI部署能力突出<br />
+- <strong>AIoT平台</strong>：全球最大消费级IoT平台之一，连接设备超8亿台<br />
+- <strong>智能驾驶</strong>：小米汽车SU7搭载自研智能驾驶系统，城市NOA逐步开城<br />
+- <strong>端侧AI</strong>：手机端AI功能（AI摄影、AI翻译、AI写作等）<br />
+- <strong>HyperOS AI</strong>：操作系统级AI整合</p>
+<p><strong>AI投入规模：</strong><br />
+- 2024年研发支出约240亿元，AI+自动驾驶为重要方向<br />
+- 智能驾驶团队超3,000人<br />
+- AI相关专利超4,000件</p>
+<h3 id="_26">核心竞争力</h3>
+<ul>
+<li><strong>端侧AI部署</strong>：在手机/设备端运行AI模型的能力国内领先</li>
+<li><strong>AIoT生态</strong>：8亿+连接设备构成最大的AIoT生态</li>
+<li><strong>用户基数</strong>：全球MIUI/HyperOS月活超6.8亿</li>
+<li><strong>汽车+AI</strong>：小米汽车SU7上市后快速放量，智能驾驶持续迭代</li>
+<li><strong>性价比策略</strong>：让AI能力以更低价格触达更广用户群</li>
+</ul>
+<h3 id="2024_5">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>3,659 亿元</td>
+<td>+35%</td>
+</tr>
+<tr>
+<td>经调整净利润</td>
+<td>272 亿元</td>
+<td>+41%</td>
+</tr>
+<tr>
+<td>手机收入</td>
+<td>1,897 亿元</td>
+<td>+21%</td>
+</tr>
+<tr>
+<td>IoT与生活消费产品</td>
+<td>1,043 亿元</td>
+<td>+26%</td>
+</tr>
+<tr>
+<td>互联网服务</td>
+<td>341 亿元</td>
+<td>+13%</td>
+</tr>
+<tr>
+<td>智能电动汽车</td>
+<td>~328 亿元</td>
+<td>新业务</td>
+</tr>
+<tr>
+<td>汽车交付量</td>
+<td>~13.7 万辆</td>
+<td>首年</td>
+</tr>
+<tr>
+<td>研发支出</td>
+<td>~241 亿元</td>
+<td>+25%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_27">产业链位置</h3>
+<ul>
+<li><strong>中游+下游</strong>：中游（操作系统/大模型平台）、下游（手机/IoT/汽车等终端产品）</li>
+</ul>
+<h3 id="_28">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：C端消费者（手机/IoT/汽车）、生态链企业</li>
+<li><strong>竞争对手</strong>：</li>
+<li>手机：华为、苹果、三星、OPPO/vivo</li>
+<li>IoT：华为全屋智能、海尔智家</li>
+<li>智能驾驶：华为ADS、特斯拉FSD、比亚迪天神之眼</li>
+<li>汽车：特斯拉、比亚迪、蔚来、小鹏</li>
+</ul>
+<hr />
+<h2 id="1211hk">八、比亚迪 (1211.HK)</h2>
+<h3 id="_29">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>1211.HK（H股）/ 002594.SZ（A股）</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>新能源汽车、动力电池、半导体、轨道交通</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 1.0 万亿港元（~1,300 亿美元）</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~90 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_8">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>天神之眼</strong>：比亚迪自研高阶智能驾驶系统，2024年发布<br />
+- <strong>璇玑架构</strong>：整车智能化架构，整合AI大模型能力<br />
+- <strong>AI座舱</strong>：DiLink智能座舱系统，接入大模型交互<br />
+- <strong>AI制造</strong>：工厂AI质检、AI排产、机器人自动化<br />
+- <strong>电池AI</strong>：AI优化电池管理（BMS），提升续航和安全性<br />
+- <strong>AI芯片</strong>：比亚迪半导体自研IGBT和MCU</p>
+<p><strong>AI投入规模：</strong><br />
+- 智能驾驶团队超5,000人<br />
+- 2024年研发投入约500亿元，AI/智能化占重要比重<br />
+- 天神之眼已在多款车型上搭载</p>
+<h3 id="_30">核心竞争力</h3>
+<ul>
+<li><strong>垂直整合</strong>：从芯片到电池到整车的全产业链自研能力</li>
+<li><strong>规模效应</strong>：全球最大新能源汽车制造商，2024年销量超427万辆</li>
+<li><strong>AI+制造</strong>：超级工厂自动化水平极高，AI深度融入制造</li>
+<li><strong>成本控制</strong>：通过规模和垂直整合实现极低制造成本</li>
+<li><strong>全球化</strong>：出口快速增长，覆盖70+国家</li>
+</ul>
+<h3 id="2024_6">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>7,771 亿元</td>
+<td>+29%</td>
+</tr>
+<tr>
+<td>归母净利润</td>
+<td>402 亿元</td>
+<td>+34%</td>
+</tr>
+<tr>
+<td>毛利率</td>
+<td>~22%</td>
+<td>提升</td>
+</tr>
+<tr>
+<td>汽车销量</td>
+<td>427 万辆</td>
+<td>+41%</td>
+</tr>
+<tr>
+<td>海外销量</td>
+<td>~41 万辆</td>
+<td>+72%</td>
+</tr>
+<tr>
+<td>研发支出</td>
+<td>~500 亿元</td>
+<td></td>
+</tr>
+<tr>
+<td>经营现金流</td>
+<td>~1,700 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_31">产业链位置</h3>
+<ul>
+<li><strong>上游+中游+下游</strong>：全产业链布局。上游（电池/半导体）、中游（整车制造/三电系统）、下游（销售/出行服务）。AI贯穿全链路。</li>
+</ul>
+<h3 id="_32">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：C端车主、出行平台、公交公司</li>
+<li><strong>竞争对手</strong>：</li>
+<li>新能源汽车：特斯拉、吉利、长安、蔚来/小鹏/理想</li>
+<li>电池：宁德时代、LG新能源</li>
+<li>智能驾驶：华为ADS、特斯拉FSD、小鹏XNGP</li>
+</ul>
+<hr />
+<h2 id="3888hk">九、金山软件 (3888.HK)</h2>
+<h3 id="_33">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>3888.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>办公软件（WPS）、云服务（金山云）、游戏（西山居）</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 600 亿港元</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~8,000 人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_9">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>WPS AI</strong>：国内首个将AI深度整合进办公套件的产品，覆盖文字/表格/演示/PDF<br />
+- <strong>WPS AI 2.0</strong>：2024年发布，支持AI写作助手、AI数据分析、AI PPT生成<br />
+- <strong>金山办公AI</strong>：面向企业的AI办公解决方案<br />
+- <strong>金山云AI</strong>：AI推理服务、模型部署平台<br />
+- <strong>AI写作</strong>：AI辅助公文写作、文档润色、翻译</p>
+<p><strong>AI投入规模：</strong><br />
+- WPS AI月活设备超5亿<br />
+- AI功能付费用户持续增长<br />
+- 金山云AI收入占比提升</p>
+<h3 id="_34">核心竞争力</h3>
+<ul>
+<li><strong>办公软件龙头</strong>：WPS在国内办公软件市场占有率领先（个人版超90%）</li>
+<li><strong>AI+办公深度融合</strong>：AI不是附加功能，而是深度嵌入办公流程</li>
+<li><strong>政企客户基础</strong>：政府和国企客户基础庞大，信创需求推动</li>
+<li><strong>移动端优势</strong>：WPS移动版用户量远超微软Office移动版</li>
+<li><strong>大模型开放策略</strong>：接入多家大模型（MiniMax、智谱等），不绑定单一供应商</li>
+</ul>
+<h3 id="2024-">财务数据（2024年全年 - 金山软件层面）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>约 100 亿元</td>
+<td>+15%</td>
+</tr>
+<tr>
+<td>金山办公收入（子公司）</td>
+<td>约 50 亿元</td>
+<td>+18%</td>
+</tr>
+<tr>
+<td>金山云收入</td>
+<td>约 75 亿元</td>
+<td>+10%</td>
+</tr>
+<tr>
+<td>净利润</td>
+<td>约 15 亿元</td>
+<td>增长</td>
+</tr>
+<tr>
+<td>研发支出</td>
+<td>约 30 亿元</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>注：金山办公（688111.SH）为金山软件子公司，是WPS AI的主体。</p>
+<h3 id="_35">产业链位置</h3>
+<ul>
+<li><strong>中游+下游</strong>：中游（办公软件平台）、下游（企业/个人办公应用）</li>
+</ul>
+<h3 id="_36">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：政府/国企（信创）、企业用户、个人用户</li>
+<li><strong>竞争对手</strong>：</li>
+<li>办公软件：微软Office 365、Google Workspace、飞书</li>
+<li>AI办公：钉钉AI、飞书AI、Notion AI</li>
+<li>云服务：阿里云、腾讯云、华为云</li>
+</ul>
+<hr />
+<h2 id="0268hk">十、金蝶国际 (0268.HK)</h2>
+<h3 id="_37">公司概况</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>股票代码</td>
+<td>0268.HK</td>
+</tr>
+<tr>
+<td>主营业务</td>
+<td>企业资源管理（ERP）、企业SaaS、财务管理软件</td>
+</tr>
+<tr>
+<td>市值</td>
+<td>约 400 亿港元</td>
+</tr>
+<tr>
+<td>员工数</td>
+<td>~1.2 万人</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_10">AI 业务布局</h3>
+<p><strong>核心AI产品线：</strong><br />
+- <strong>金蝶云·苍穹</strong>：大型企业SaaS平台，集成AI能力<br />
+- <strong>金蝶云·星空</strong>：中型企业SaaS，AI驱动的智能财务/供应链<br />
+- <strong>AI助手</strong>：财务AI助手、供应链AI助手、HR AI助手<br />
+- <strong>Cosmic AI平台</strong>：金蝶自研AI平台，整合大模型能力<br />
+- <strong>智能财务</strong>：AI自动记账、智能报表、异常检测<br />
+- <strong>AI代码助手</strong>：面向开发者的AI编程辅助</p>
+<p><strong>AI投入规模：</strong><br />
+- 苍穹/星空平台服务超700万家企业<br />
+- AI功能覆盖财务、供应链、HR等多个业务领域<br />
+- 2024年研发支出约18亿元</p>
+<h3 id="_38">核心竞争力</h3>
+<ul>
+<li><strong>企业软件龙头</strong>：中国最大的独立企业SaaS厂商</li>
+<li><strong>行业Know-how</strong>：30年企业软件经验，深度理解中国企业需求</li>
+<li><strong>信创替代</strong>：国产ERP替代SAP/Oracle的核心受益者</li>
+<li><strong>云转型领先</strong>：云订阅收入占比持续提升，ARR增长强劲</li>
+<li><strong>大企业客户</strong>：苍穹平台签约多家大型央企和国企</li>
+</ul>
+<h3 id="2024_7">财务数据（2024年全年）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数据</th>
+<th>同比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>营收</td>
+<td>约 58 亿元</td>
+<td>+15%</td>
+</tr>
+<tr>
+<td>云订阅收入</td>
+<td>约 32 亿元</td>
+<td>+28%</td>
+</tr>
+<tr>
+<td>ARR（年化经常性收入）</td>
+<td>约 35 亿元</td>
+<td>+25%</td>
+</tr>
+<tr>
+<td>毛利率</td>
+<td>~65%</td>
+<td></td>
+</tr>
+<tr>
+<td>净亏损</td>
+<td>约 5 亿元</td>
+<td>亏损收窄</td>
+</tr>
+<tr>
+<td>研发支出</td>
+<td>约 18 亿元</td>
+<td></td>
+</tr>
+<tr>
+<td>大型企业客户数</td>
+<td>~1,000 家</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>注：金蝶仍处于云转型投入期，尚未盈利，但云收入占比已超55%，亏损持续收窄。</p>
+<h3 id="_39">产业链位置</h3>
+<ul>
+<li><strong>中游+下游</strong>：中游（企业SaaS平台）、下游（企业数字化应用）</li>
+</ul>
+<h3 id="_40">主要客户与竞争对手</h3>
+<ul>
+<li><strong>客户</strong>：大中小型企业（财务、供应链、HR管理）</li>
+<li><strong>竞争对手</strong>：</li>
+<li>企业软件：用友网络、SAP、Oracle、浪潮</li>
+<li>AI企业服务：Salesforce（Agentforce）、微软Copilot</li>
+<li>SaaS：北森、明源云、有赞</li>
+</ul>
+<hr />
+<h2 id="_41">综合对比分析</h2>
+<h3 id="_42">按市值排序</h3>
+<table>
+<thead>
+<tr>
+<th>排名</th>
+<th>公司</th>
+<th>代码</th>
+<th>市值（港元）</th>
+<th>AI定位</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>腾讯</td>
+<td>0700.HK</td>
+<td>~4.2 万亿</td>
+<td>AI全栈（模型+应用+云）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>阿里巴巴</td>
+<td>9988.HK</td>
+<td>~2.0 万亿</td>
+<td>AI全栈（模型+云+芯片）</td>
+</tr>
+<tr>
+<td>3</td>
+<td>美团</td>
+<td>3690.HK</td>
+<td>~8,500 亿</td>
+<td>AI应用（本地生活）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>小米</td>
+<td>1810.HK</td>
+<td>~1.0 万亿</td>
+<td>端侧AI+AIoT</td>
+</tr>
+<tr>
+<td>5</td>
+<td>比亚迪</td>
+<td>1211.HK</td>
+<td>~1.0 万亿</td>
+<td>智能驾驶+AI制造</td>
+</tr>
+<tr>
+<td>6</td>
+<td>百度</td>
+<td>9888.HK</td>
+<td>~2,500 亿</td>
+<td>AI全栈（模型+自动驾驶）</td>
+</tr>
+<tr>
+<td>7</td>
+<td>金山软件</td>
+<td>3888.HK</td>
+<td>~600 亿</td>
+<td>AI办公</td>
+</tr>
+<tr>
+<td>8</td>
+<td>商汤</td>
+<td>0020.HK</td>
+<td>~600 亿</td>
+<td>AI基础设施+视觉</td>
+</tr>
+<tr>
+<td>9</td>
+<td>科大讯飞</td>
+<td>002230.SZ</td>
+<td>~1,200 亿</td>
+<td>语音AI+教育AI</td>
+</tr>
+<tr>
+<td>10</td>
+<td>金蝶国际</td>
+<td>0268.HK</td>
+<td>~400 亿</td>
+<td>AI企业软件</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai_11">按AI业务纯度分类</h3>
+<p><strong>AI核心型（AI是主营业务）：</strong><br />
+- 百度（文心大模型+自动驾驶）<br />
+- 商汤（AI视觉+大模型）<br />
+- 科大讯飞（语音AI+星火大模型）</p>
+<p><strong>AI平台型（AI是核心增长引擎）：</strong><br />
+- 腾讯（混元大模型+AI应用生态）<br />
+- 阿里巴巴（通义千问+阿里云AI）<br />
+- 金山软件（WPS AI）<br />
+- 金蝶国际（AI企业软件）</p>
+<p><strong>AI应用型（AI赋能主业）：</strong><br />
+- 美团（AI调度+无人配送）<br />
+- 小米（端侧AI+智能驾驶）<br />
+- 比亚迪（智能驾驶+AI制造）</p>
+<h3 id="_43">产业链全景</h3>
+<pre><code>上游（基础设施层）
+├── AI芯片：比亚迪（半导体）、阿里（平头哥）、百度（昆仑）
+├── AI算力：商汤（大装置）、阿里（阿里云）、腾讯（腾讯云）
+└── AI框架：百度（飞桨）
+
+中游（模型/平台层）
+├── 通用大模型：百度（文心）、阿里（通义）、腾讯（混元）、商汤（日日新）、讯飞（星火）
+├── AI云平台：阿里云、腾讯云、百度智能云、金山云
+└── 垂直平台：金山（办公AI）、金蝶（企业AI）
+
+下游（应用层）
+├── 消费互联网：腾讯（社交/游戏）、美团（本地生活）、小米（手机/IoT）
+├── 产业互联网：金蝶（企业软件）、科大讯飞（教育/医疗）、商汤（智慧城市）
+└── 智能终端：小米（汽车/手机）、比亚迪（汽车）、百度（Apollo）
+</code></pre>
+<hr />
+<h2 id="_44">关键风险提示</h2>
+<ol>
+<li><strong>AI监管风险</strong>：中国AI监管政策趋严，大模型需通过备案</li>
+<li><strong>芯片限制</strong>：美国对华AI芯片出口限制影响算力扩展</li>
+<li><strong>商业化不确定性</strong>：大模型商业化路径仍在探索，ROI待验证</li>
+<li><strong>竞争加剧</strong>：DeepSeek等新兴玩家加剧竞争</li>
+<li><strong>地缘政治</strong>：中美科技脱钩风险影响全球化布局</li>
+<li><strong>宏观经济</strong>：消费疲软影响广告、电商等业务</li>
+</ol>
+<hr />
+<blockquote>
+<p><strong>免责声明</strong>：本报告数据基于各公司公开财报和公开信息整理，不构成投资建议。市值和股价数据会实时波动，请以最新行情为准。部分2024年全年数据为基于前三季度趋势的估算值，最终数据以公司正式年报为准。</p>
+</blockquote></div>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle sidebar nav groups
+  document.querySelectorAll('.nav-group-title').forEach(function(el) {
+    el.addEventListener('click', function() {
+      this.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Backlinks: toggle individual groups
+  document.querySelectorAll('.bl-group-header').forEach(function(header) {
+    header.addEventListener('click', function() {
+      this.closest('.bl-group').classList.toggle('open');
+    });
+  });
+
+  // Backlinks: expand/collapse all
+  document.querySelectorAll('.bl-expand-all').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      this.closest('.backlinks-panel').querySelectorAll('.bl-group').forEach(function(g) {
+        g.classList.add('open');
+      });
+    });
+  });
+  document.querySelectorAll('.bl-collapse-all').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      this.closest('.backlinks-panel').querySelectorAll('.bl-group').forEach(function(g) {
+        g.classList.remove('open');
+      });
+    });
+  });
+});
+</script>
+</body>
+</html>
